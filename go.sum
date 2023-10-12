@@ -1,0 +1,4 @@
+github.com/checkpoint-restore/go-criu/v7 v7.0.0 h1:R4UF/njKOuq8ooG7naFGsCeKsjv5j+rIhgFgSSeC2KY=
+github.com/checkpoint-restore/go-criu/v7 v7.0.0/go.mod h1:xD1v3cPww1QYpJR3+XTTdC8hYubPnptIPsT1daXhbr4=
+google.golang.org/protobuf v1.31.0 h1:g0LDEJHgrBl9N9r17Ru3sqWhkIx2NB67okBHPwC7hs8=
+google.golang.org/protobuf v1.31.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
