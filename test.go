@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 
 	criu "github.com/checkpoint-restore/go-criu/v7"
 	"github.com/checkpoint-restore/go-criu/v7/rpc"
@@ -20,6 +19,9 @@ type NoNotify struct {
 // setsid go run /home/hannahmanuela/gotest/sleep/sleep.go < /dev/null &> sleep_out.log &
 // ps -aux | less | grep sleep.go
 // --> put that pid into sudo go run test.go <pid>
+//
+// to not need to run sudo, grant binary capabilities:
+// sudo setcap cap_sys_ptrace,cap_sys_admin,cap_dac_read_search,cap_net_admin=eip /usr/local/sbin/criu
 
 func CheckPoint(imgDir string, pid int, c *criu.Criu) error {
 
@@ -31,11 +33,12 @@ func CheckPoint(imgDir string, pid int, c *criu.Criu) error {
 	defer img.Close()
 
 	opts := &rpc.CriuOpts{
-		Pid:         proto.Int32(int32(pid)),
-		ImagesDirFd: proto.Int32(int32(img.Fd())),
-		LogLevel:    proto.Int32(4),
-		ShellJob:    proto.Bool(true),
-		LogFile:     proto.String("dump.log"),
+		Pid:          proto.Int32(int32(pid)),
+		ImagesDirFd:  proto.Int32(int32(img.Fd())),
+		LogLevel:     proto.Int32(4),
+		ShellJob:     proto.Bool(true),
+		Unprivileged: proto.Bool(true),
+		LogFile:      proto.String("dump.log"),
 	}
 
 	return c.Dump(opts, NoNotify{})
@@ -79,17 +82,17 @@ func main() {
 		fmt.Println("dump successful")
 	}
 	// wait
-	time.Sleep(2 * time.Second)
+	// time.Sleep(2 * time.Second)
 
-	fmt.Println("trying to restore")
+	// fmt.Println("trying to restore")
 
-	// restore
-	err = Restore(imgDir, c)
-	if err != nil {
-		fmt.Println(err)
-		log.Fatalf("restore fail")
-	} else {
-		fmt.Println("restore successful")
-	}
+	// // restore
+	// err = Restore(imgDir, c)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	log.Fatalf("restore fail")
+	// } else {
+	// 	fmt.Println("restore successful")
+	// }
 
 }
