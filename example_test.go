@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"syscall"
 	"testing"
 
 	criu "github.com/checkpoint-restore/go-criu/v7"
@@ -55,67 +56,68 @@ func Restore(imgDir string, c *criu.Criu) error {
 	defer img.Close()
 
 	opts := &rpc.CriuOpts{
-		ImagesDirFd: proto.Int32(int32(img.Fd())),
-		LogLevel:    proto.Int32(4),
-		ShellJob:    proto.Bool(true),
-		LogFile:     proto.String("restore.log"),
+		ImagesDirFd:  proto.Int32(int32(img.Fd())),
+		LogLevel:     proto.Int32(4),
+		ShellJob:     proto.Bool(true),
+		Unprivileged: proto.Bool(true),
+		LogFile:      proto.String("restore.log"),
 	}
 
 	return c.Restore(opts, nil)
 }
 
-// func TestCheckpointing(t *testing.T) {
+func TestCheckpointing(t *testing.T) {
 
-// 	imgDir := "chkptimg"
-// 	c := criu.MakeCriu()
+	imgDir := "chkptimg"
+	c := criu.MakeCriu()
 
-// 	// log.Printf(os.Getenv("PATH"))
-// 	os.Setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/hannahmanuela/gotest")
-// 	// log.Printf(os.Getenv("PATH"))
+	// log.Printf(os.Getenv("PATH"))
+	os.Setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/hannahmanuela/example-criu-go")
+	// log.Printf(os.Getenv("PATH"))
 
-// 	cmd := exec.Command("example")
-// 	// cmd.Env = uproc.GetEnv()
-// 	outfile, err := os.Create("./out.txt")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	defer outfile.Close()
-// 	cmd.Stdout = outfile
-// 	// Set up new namespaces
-// 	// cmd.SysProcAttr.Setsid = true
-// 	cmd.SysProcAttr = &syscall.SysProcAttr{
-// 		Setsid: true,
-// 		Cloneflags: syscall.CLONE_NEWUTS |
-// 			syscall.CLONE_NEWIPC |
-// 			syscall.CLONE_NEWPID,
-// 	}
-// 	if err := cmd.Start(); err != nil {
-// 		log.Fatalf("Error start %v %v", cmd, err)
-// 	}
-// 	log.Printf("---> RUNNING WITH PID %d\n", cmd.Process.Pid)
+	cmd := exec.Command("example")
 
-// 	err = CheckPoint(imgDir, cmd.Process.Pid, c)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		log.Fatalf("dump fail")
-// 	} else {
-// 		fmt.Println("dump successful")
-// 	}
-// }
+	outfile, err := os.Create("./out.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
+	// cmd.Stdout = os.Stdout
 
-func TestRestoring(t *testing.T) {
-	fmt.Println("trying to restore")
-
-	os.Setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/hannahmanuela/gotest")
-
-	// restore
-	cmd := exec.Command("restore-wrapper", "./chkptimg")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
+	// Set up new namespaces
+	// cmd.SysProcAttr.Setsid = true
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("Error start %v %v", cmd, err)
 	}
-	// log.Printf("---> RUNNING WITH PID %d\n", cmd.Process.Pid)
+	log.Printf("---> RUNNING WITH PID %d\n", cmd.Process.Pid)
 
+	err = CheckPoint(imgDir, cmd.Process.Pid, c)
+	if err != nil {
+		fmt.Println(err.Error())
+		log.Fatalf("dump fail")
+	} else {
+		fmt.Println("dump successful")
+	}
 }
+
+// func TestRestoring(t *testing.T) {
+// 	fmt.Println("trying to restore")
+
+// 	os.Setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/hannahmanuela/example-criu-go")
+
+// 	Restore("chkptimg", criu.MakeCriu())
+
+// 	// restore
+// 	// cmd := exec.Command("restore-wrapper", "./chkptimg")
+// 	// cmd.Stdout = os.Stdout
+// 	// cmd.Stderr = os.Stderr
+
+// 	// if err := cmd.Start(); err != nil {
+// 	// log.Fatalf("Error start %v %v", cmd, err)
+// 	// }
+// 	// log.Printf("---> RUNNING WITH PID %d\n", cmd.Process.Pid)
+// }
